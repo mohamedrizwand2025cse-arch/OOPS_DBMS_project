@@ -16,8 +16,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Loads MongoDB configuration without embedding credentials in the application.
@@ -26,8 +24,6 @@ public class MongoConfig {
     private static final String URI_PROPERTY = "RULEWEAVER_MONGO_URI";
     private static final String DATABASE_PROPERTY = "RULEWEAVER_DB_NAME";
     private static final String DEFAULT_DATABASE_NAME = "ruleweaver";
-    private static final Pattern URI_CREDENTIALS =
-            Pattern.compile("(?i)(mongodb(?:\\+srv)?://)([^:/@]+):([^@]+)@");
     private static volatile MongoClient mongoClient;
 
     private MongoConfig() {
@@ -88,8 +84,9 @@ public class MongoConfig {
         if (value == null) {
             return "";
         }
-        Matcher matcher = URI_CREDENTIALS.matcher(value);
-        return matcher.replaceAll("$1$2:****@");
+        return value.replaceAll(
+                        "(?i)mongodb(?:\\+srv)?://\\S+", "[MongoDB URI]")
+                .replaceAll("(?i)jdbc:mysql://\\S+", "[MySQL URL]");
     }
 
     private static Properties loadProperties() {

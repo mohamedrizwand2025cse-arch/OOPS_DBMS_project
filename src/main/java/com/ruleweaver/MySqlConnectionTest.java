@@ -1,16 +1,15 @@
 
 package com.ruleweaver;
 
+import com.ruleweaver.config.MySqlConnectionFactory;
+
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
 
 public class MySqlConnectionTest {
 
     public static void main(String[] args) {
-        String url = "jdbc:mysql://localhost:3306/ruleweaver_sql";
-
         String user = System.getenv("MYSQL_USER");
         String password = System.getenv("MYSQL_PASSWORD");
 
@@ -21,7 +20,7 @@ public class MySqlConnectionTest {
         }
 
         try (
-                Connection connection = DriverManager.getConnection(url, user, password);
+                Connection connection = MySqlConnectionFactory.getConnection();
                 Statement statement = connection.createStatement();
                 ResultSet result = statement.executeQuery("SELECT VERSION(), DATABASE()")) {
             if (result.next()) {
@@ -32,9 +31,11 @@ public class MySqlConnectionTest {
                 System.out.println(
                         "Database: " + result.getString(2));
             }
-        } catch (Exception e) {
-            System.err.println("MySQL connection failed:");
-            e.printStackTrace();
+        } catch (java.sql.SQLException e) {
+            System.err.println("MySQL connection failed (SQLState="
+                    + e.getSQLState() + ", vendorCode=" + e.getErrorCode()
+                    + "): " + com.ruleweaver.config.MongoConfig.sanitize(
+                            e.getMessage()));
         }
     }
 }

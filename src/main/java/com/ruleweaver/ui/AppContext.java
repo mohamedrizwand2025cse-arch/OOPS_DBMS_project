@@ -394,11 +394,6 @@ public class AppContext {
                 mongoChangeStreamListener = null;
             }
 
-            if (syncWorkerRunner != null) {
-                syncWorkerRunner.close();
-                syncWorkerRunner = null;
-            }
-
             executor.shutdownNow();
             MongoConfig.close();
 

@@ -6,18 +6,24 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.changestream.FullDocument;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
+import com.ruleweaver.config.MongoConfig;
 import com.ruleweaver.model.Applicant;
 import com.ruleweaver.repository.ApplicantMySqlRepository;
 import com.ruleweaver.ui.adapter.ApplicantDocumentMapper;
 
 import org.bson.Document;
 import org.bson.BsonValue;
+import org.bson.BsonDocument;
 
 import java.sql.SQLException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Logger;
 
 public final class MongoToMySqlChangeStreamListener
         implements AutoCloseable {
+
+    private static final Logger LOGGER =
+            Logger.getLogger(MongoToMySqlChangeStreamListener.class.getName());
 
     private final MongoCollection<Document> applicants;
     private final ApplicantMySqlRepository mysqlRepository;
@@ -57,8 +63,9 @@ public final class MongoToMySqlChangeStreamListener
                 }
             } catch (Exception e) {
                 if (running.get()) {
-                    System.err.println(
-                            "MongoDB change stream failed: " + e.getMessage());
+                    LOGGER.warning("MongoDB change stream failed: "
+                            + MongoConfig.sanitize(e.getClass().getSimpleName()
+                                    + ": " + e.getMessage()));
 
                     try {
                         Thread.sleep(3000);
@@ -80,16 +87,12 @@ public final class MongoToMySqlChangeStreamListener
                     : change.getDocumentKey().get("_id");
 
             if (idValue != null) {
-                String id = idValue.isObjectId()
-                        ? idValue.asObjectId().getValue().toHexString()
-                        : idValue.toString();
+                String id = mongoIdFromBson(idValue);
 
                 try {
                     mysqlRepository.markDeletedByMongoId(id);
                 } catch (SQLException e) {
-                    System.err.println(
-                            "Could not sync deleted applicant " + id + ": "
-                                    + e.getMessage());
+                    logFailure("Could not sync deleted applicant " + id, e);
                 }
             }
             return;
@@ -101,8 +104,11 @@ public final class MongoToMySqlChangeStreamListener
             return;
         }
 
-        // Ignore updates written by the MySQL -> MongoDB worker.
-        if ("mysql".equals(document.getString("_sync_origin"))) {
+        BsonDocument updatedFields = change.getUpdateDescription() == null
+                ? null
+                : change.getUpdateDescription().getUpdatedFields();
+        if (isMySqlOriginated(
+                operation, document.getString("_sync_origin"), updatedFields)) {
             return;
         }
 
@@ -111,8 +117,7 @@ public final class MongoToMySqlChangeStreamListener
             try {
                 mysqlRepository.markDeletedByMongoId(id);
             } catch (SQLException e) {
-                System.err.println(
-                        "Could not sync applicant tombstone: " + e.getMessage());
+                logFailure("Could not sync applicant tombstone " + id, e);
             }
             return;
         }
@@ -122,10 +127,39 @@ public final class MongoToMySqlChangeStreamListener
         try {
             mysqlRepository.upsert(applicant);
         } catch (SQLException e) {
-            System.err.println(
-                    "Could not sync applicant " + applicant.getId() + ": "
-                            + e.getMessage());
+            logFailure("Could not sync applicant " + applicant.getId(), e);
         }
+    }
+
+    static boolean isMySqlOriginated(
+            String operation, String origin, BsonDocument updatedFields) {
+        if (!"mysql".equals(origin)) {
+            return false;
+        }
+        BsonValue updatedOrigin = updatedFields == null
+                ? null
+                : updatedFields.get("_sync_origin");
+        return "insert".equals(operation)
+                || "replace".equals(operation)
+                || (updatedOrigin != null && updatedOrigin.isString()
+                        && "mysql".equals(updatedOrigin.asString().getValue()));
+    }
+
+    static String mongoIdFromBson(BsonValue idValue) {
+        if (idValue.isObjectId()) {
+            return idValue.asObjectId().getValue().toHexString();
+        }
+        if (idValue.isString()) {
+            return idValue.asString().getValue();
+        }
+        return idValue.toString();
+    }
+
+    private static void logFailure(String action, SQLException failure) {
+        LOGGER.warning(action + " (SQLState=" + failure.getSQLState()
+                + ", vendorCode=" + failure.getErrorCode() + "): "
+                + MongoConfig.sanitize(failure.getClass().getSimpleName()
+                        + ": " + failure.getMessage()));
     }
 
     @Override

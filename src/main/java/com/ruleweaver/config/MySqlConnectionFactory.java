@@ -4,14 +4,11 @@ package com.ruleweaver.config;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ruleweaver.config.MySqlConnectionFactory;
-import com.ruleweaver.model.Applicant;
 
 public final class MySqlConnectionFactory {
 
-    private static final String URL = "jdbc:mysql://localhost:3306/ruleweaver_sql?serverTimezone=UTC";
+    private static final String DEFAULT_URL =
+            "jdbc:mysql://localhost:3306/ruleweaver_sql?serverTimezone=UTC";
 
     private MySqlConnectionFactory() {
         // Utility class
@@ -20,6 +17,7 @@ public final class MySqlConnectionFactory {
     public static Connection getConnection() throws SQLException {
         String username = System.getenv("MYSQL_USER");
         String password = System.getenv("MYSQL_PASSWORD");
+        String configuredUrl = System.getenv("MYSQL_URL");
 
         if (username == null || username.isBlank()
                 || password == null || password.isBlank()) {
@@ -28,6 +26,9 @@ public final class MySqlConnectionFactory {
                             + "and MYSQL_PASSWORD in the application environment.");
         }
 
-        return DriverManager.getConnection(URL, username, password);
+        String url = configuredUrl == null || configuredUrl.isBlank()
+                ? DEFAULT_URL
+                : configuredUrl.trim();
+        return DriverManager.getConnection(url, username, password);
     }
 }

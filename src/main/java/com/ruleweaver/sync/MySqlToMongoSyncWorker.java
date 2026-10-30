@@ -8,21 +8,26 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.ReplaceOptions;
 import com.ruleweaver.config.MySqlConnectionFactory;
+import com.ruleweaver.config.MongoConfig;
 
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
+import java.sql.SQLException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public final class MySqlToMongoSyncWorker {
 
+    private static final Logger LOGGER =
+            Logger.getLogger(MySqlToMongoSyncWorker.class.getName());
     private static final ObjectMapper JSON = new ObjectMapper();
 
     private final MongoCollection<Document> applicants;
@@ -36,6 +41,9 @@ public final class MySqlToMongoSyncWorker {
         int processed = 0;
 
         for (QueueItem item : pending) {
+            LOGGER.info(() -> "Applying MySQL sync event id=" + item.id()
+                    + ", operation=" + item.operation()
+                    + ", mongo_id=" + item.mongoId());
             try {
                 if ("UPSERT".equalsIgnoreCase(item.operation())) {
                     syncApplicant(item.mongoId());
@@ -50,10 +58,12 @@ public final class MySqlToMongoSyncWorker {
                 processed++;
 
             } catch (Exception e) {
-                // Leave the event pending so a later run can retry it.
-                System.err.println(
-                        "Sync event " + item.id() + " failed: "
-                                + e.getMessage());
+                LOGGER.log(Level.SEVERE,
+                        "MySQL sync event id=" + item.id()
+                                + ", operation=" + item.operation()
+                                + ", mongo_id=" + item.mongoId()
+                                + " failed; it remains pending. "
+                                + describeFailure(e));
             }
         }
 
@@ -183,6 +193,20 @@ public final class MySqlToMongoSyncWorker {
         } catch (Exception e) {
             throw new SQLException("Invalid JSON in applicant data.", e);
         }
+    }
+
+    private static String describeFailure(Exception failure) {
+        String message = failure.getMessage();
+        if (message == null || message.isBlank()) {
+            message = "No additional error message.";
+        }
+        message = MongoConfig.sanitize(message);
+        if (failure instanceof SQLException sqlException) {
+            return failure.getClass().getSimpleName() + ": " + message
+                    + " (SQLState=" + sqlException.getSQLState()
+                    + ", vendorCode=" + sqlException.getErrorCode() + ")";
+        }
+        return failure.getClass().getSimpleName() + ": " + message;
     }
 
     private record QueueItem(
