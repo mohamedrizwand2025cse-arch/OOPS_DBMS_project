@@ -49,7 +49,7 @@ public class Sidebar extends VBox {
     private Destination currentDestination = Destination.DASHBOARD;
     private final Consumer<Destination> onNavigate;
 
-    public Sidebar(Consumer<Destination> onNavigate, Runnable onSeedData, Runnable onClearDemoData) {
+    public Sidebar(Consumer<Destination> onNavigate, Runnable onSignOut) {
         this.onNavigate = onNavigate;
         getStyleClass().add("sidebar");
 
@@ -65,8 +65,8 @@ public class Sidebar extends VBox {
         }
         VBox.setVgrow(navItemsBox, Priority.ALWAYS);
 
-        // 3. Footer with Mongo status & Demo data seeder
-        VBox footerBox = createFooter(onSeedData, onClearDemoData);
+        // 3. Footer with sign-out and Mongo status
+        VBox footerBox = createFooter(onSignOut);
 
         getChildren().addAll(logoBlock, navItemsBox, footerBox);
         setActive(Destination.DASHBOARD);
@@ -142,31 +142,16 @@ public class Sidebar extends VBox {
         }
     }
 
-    private VBox createFooter(Runnable onSeedData, Runnable onClearDemoData) {
+    private VBox createFooter(Runnable onSignOut) {
         VBox footer = new VBox(10);
         footer.setAlignment(Pos.CENTER_LEFT);
         footer.getStyleClass().add("sidebar-footer");
 
-        // Seed Sample Data Button
-        if (onSeedData != null) {
-            Button seedBtn = new Button("Seed Demo Data");
-            seedBtn.getStyleClass().add(Styles.ACCENT);
-            seedBtn.setMaxWidth(Double.MAX_VALUE);
-            FontIcon sparkles = Icons.create(Icons.SPARKLES, 0.65, "#11111b");
-            seedBtn.setGraphic(sparkles);
-            seedBtn.setOnAction(e -> {
-                onSeedData.run();
-            });
-            footer.getChildren().add(seedBtn);
-        }
-
-        if (onClearDemoData != null) {
-            Button clearBtn = new Button("Clear Demo Data");
-            clearBtn.getStyleClass().add(Styles.DANGER);
-            clearBtn.setMaxWidth(Double.MAX_VALUE);
-            clearBtn.setOnAction(e -> onClearDemoData.run());
-            footer.getChildren().add(clearBtn);
-        }
+        Button signOutBtn = new Button("Sign Out");
+        signOutBtn.getStyleClass().add(Styles.DANGER);
+        signOutBtn.setMaxWidth(Double.MAX_VALUE);
+        signOutBtn.setOnAction(e -> onSignOut.run());
+        footer.getChildren().add(signOutBtn);
 
         // MongoDB Atlas Status Chip
         HBox mongoChip = new HBox(8);

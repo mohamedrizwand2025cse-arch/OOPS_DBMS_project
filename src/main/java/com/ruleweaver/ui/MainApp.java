@@ -1,5 +1,7 @@
 package com.ruleweaver.ui;
 
+import com.ruleweaver.ui.auth.LoginView;
+import com.ruleweaver.ui.auth.Session;
 import com.ruleweaver.ui.components.Toast;
 import com.ruleweaver.ui.components.MongoConnectionDialog;
 import com.ruleweaver.ui.shell.AppHeader;
@@ -36,6 +38,24 @@ public class MainApp extends Application {
     public void start(Stage primaryStage) {
         appContext = AppContext.getInstance();
 
+        primaryStage.setMinWidth(1100);
+        primaryStage.setMinHeight(700);
+        primaryStage.setOnCloseRequest(e -> appContext.shutdown());
+        showLogin(primaryStage);
+    }
+
+    private void showLogin(Stage primaryStage) {
+        LoginView loginView = new LoginView(primaryStage, user -> showApp(primaryStage));
+        Scene loginScene = new Scene(loginView.getRoot(), 1220, 780);
+        Theme.apply(loginScene);
+        primaryStage.setTitle("RuleWeaver X — Sign in");
+        primaryStage.setScene(loginScene);
+        primaryStage.show();
+    }
+
+    private void showApp(Stage primaryStage) {
+        appContext = AppContext.getInstance();
+
         // 1. Root Shell Layout
         StackPane rootLayer = new StackPane();
         rootLayer.getStyleClass().add("app-shell");
@@ -69,11 +89,11 @@ public class MainApp extends Application {
 
         // Sidebar Navigation
         Sidebar sidebar = new Sidebar(
-                dest -> {
-                    navigateTo(dest);
-                },
-                this::handleSeedDemoData,
-                this::confirmClearDemoData);
+                this::navigateTo,
+                () -> {
+                    Session.end();
+                    showLogin(primaryStage);
+                });
 
         // Header
         header = new AppHeader(() -> {
