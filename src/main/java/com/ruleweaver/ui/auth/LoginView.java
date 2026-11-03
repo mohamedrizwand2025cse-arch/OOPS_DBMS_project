@@ -26,6 +26,8 @@ import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
@@ -45,6 +47,7 @@ import java.util.function.Consumer;
 public final class LoginView {
 
     private static final String STYLESHEET = "/css/login.css";
+    private static final String COLLEGE_LOGO = "/images/rajalakshmi-engineering-college.png";
     private static final double TAB_WIDTH = 184;
     private static final double TAB_HEIGHT = 38;
     private static final double NAME_FIELD_HEIGHT = 76;
@@ -98,6 +101,7 @@ public final class LoginView {
         root.getStylesheets().add(getClass().getResource(STYLESHEET).toExternalForm());
         root.getStyleClass().add("login-root");
 
+        Image logoImage = new Image(getClass().getResource(COLLEGE_LOGO).toExternalForm());
         weave.widthProperty().bind(root.widthProperty());
         weave.heightProperty().bind(root.heightProperty());
         weave.setMouseTransparent(true);
@@ -109,7 +113,15 @@ public final class LoginView {
         content.setAlignment(Pos.CENTER);
         content.setPadding(new Insets(48, 96, 48, 96));
 
-        root.getChildren().addAll(weave, content);
+        ImageView collegeLogo = new ImageView(logoImage);
+        collegeLogo.setFitWidth(300);
+        collegeLogo.setPreserveRatio(true);
+        collegeLogo.setSmooth(true);
+        collegeLogo.setMouseTransparent(true);
+        StackPane.setAlignment(collegeLogo, Pos.TOP_LEFT);
+        StackPane.setMargin(collegeLogo, new Insets(24, 0, 0, 28));
+
+        root.getChildren().addAll(weave, content, collegeLogo);
         weave.play(!AppContext.getInstance().reducedMotionProperty().get());
     }
 

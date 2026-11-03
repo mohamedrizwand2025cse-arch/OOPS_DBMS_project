@@ -71,8 +71,8 @@ public class ComparisonView implements BaseView {
     }
 
     private void buildUI() {
-        VBox contentBox = new VBox(20);
-        contentBox.setPadding(new Insets(28, 32, 28, 32));
+        VBox contentBox = new VBox(18);
+        contentBox.setPadding(new Insets(24, 28, 24, 28));
 
         HBox toolbar = createToolbar();
         TabPane workflows = new TabPane();
@@ -121,13 +121,15 @@ public class ComparisonView implements BaseView {
         VBox panel = new VBox(14, filters, columns);
         panel.setPadding(new Insets(18, 0, 0, 0));
         VBox.setVgrow(panel, Priority.ALWAYS);
-        Tab tab = new Tab("Version history", panel);
+        Tab tab = new Tab("Version History", panel);
         tab.setClosable(false);
         return tab;
     }
 
     private Tab createComparisonTab() {
         VBox comparisonContent = new VBox(14);
+        comparisonContent.getStyleClass().add("time-machine-comparison-content");
+        comparisonContent.setFillWidth(true);
         HBox controlBar = createControlBar();
         VBox configurationCard = createConfigurationComparison();
         HBox summaryRow = createSummaryCards();
@@ -135,11 +137,14 @@ public class ComparisonView implements BaseView {
         VBox recordedComparison = new VBox(8, summaryRow, tableCard);
         recordedComparison.getStyleClass().add("time-machine-recorded-comparison");
         VBox.setVgrow(tableCard, Priority.ALWAYS);
-        VBox.setVgrow(configurationCard, Priority.ALWAYS);
-        VBox.setVgrow(recordedComparison, Priority.ALWAYS);
         comparisonContent.getChildren().addAll(controlBar, configurationCard, recordedComparison);
-        VBox.setVgrow(comparisonContent, Priority.ALWAYS);
-        Tab tab = new Tab("Compare versions", comparisonContent);
+        ScrollPane scroll = new ScrollPane(comparisonContent);
+        scroll.setFitToWidth(true);
+        scroll.setFitToHeight(true);
+        scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scroll.getStyleClass().add("time-machine-content-scroll");
+        VBox.setVgrow(scroll, Priority.ALWAYS);
+        Tab tab = new Tab("Compare Versions", scroll);
         tab.setClosable(false);
         return tab;
     }
@@ -198,7 +203,7 @@ public class ComparisonView implements BaseView {
         VBox panel = new VBox(14, filters, columns);
         panel.setPadding(new Insets(18, 0, 0, 0));
         VBox.setVgrow(panel, Priority.ALWAYS);
-        Tab tab = new Tab("Decision log", panel);
+        Tab tab = new Tab("Decision Log", panel);
         tab.setClosable(false);
         return tab;
     }
@@ -334,19 +339,22 @@ public class ComparisonView implements BaseView {
         headingRow.getChildren().addAll(heading, showUnchangedRules);
 
         configurationDiffSummary.getStyleClass().add("section-subtitle");
-        configurationDiffTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
+        configurationDiffTable.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
+        configurationDiffTable.setMinHeight(130);
         configurationDiffTable.setPlaceholder(
                 new Label("Select two versions to compare their saved conditions."));
         configurationDiffTable.setRowFactory(table -> {
             TableRow<PolicyVersionDiff.Change> row = new TableRow<>();
-            row.setPrefHeight(38);
+            row.setMinHeight(48);
+            row.setPrefHeight(-1);
             return row;
         });
 
         TableColumn<PolicyVersionDiff.Change, String> changeColumn = new TableColumn<>("CHANGE");
         changeColumn.setCellValueFactory(cell -> new SimpleStringProperty(
                 titleCase(cell.getValue().type().name())));
-        changeColumn.setPrefWidth(105);
+        changeColumn.setMinWidth(118);
+        changeColumn.setPrefWidth(138);
         changeColumn.setCellFactory(column -> new TableCell<>() {
             @Override
             protected void updateItem(String value, boolean empty) {
@@ -364,10 +372,14 @@ public class ComparisonView implements BaseView {
         TableColumn<PolicyVersionDiff.Change, String> baselineColumn = new TableColumn<>("BASELINE");
         baselineColumn.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().baseline()));
         baselineColumn.setCellFactory(column -> wrappedTextCell());
+        baselineColumn.setMinWidth(260);
+        baselineColumn.setPrefWidth(360);
 
         TableColumn<PolicyVersionDiff.Change, String> targetColumn = new TableColumn<>("TARGET");
         targetColumn.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().target()));
         targetColumn.setCellFactory(column -> wrappedTextCell());
+        targetColumn.setMinWidth(260);
+        targetColumn.setPrefWidth(360);
         configurationDiffTable.getColumns().setAll(changeColumn, baselineColumn, targetColumn);
         configurationDiffTable.setItems(configurationChanges);
         VBox.setVgrow(configurationDiffTable, Priority.ALWAYS);
@@ -380,6 +392,8 @@ public class ComparisonView implements BaseView {
             @Override
             protected void updateItem(String value, boolean empty) {
                 super.updateItem(value, empty);
+                setWrapText(true);
+                setAlignment(Pos.CENTER_LEFT);
                 setText(empty ? null : blankAsUnavailable(value, "—"));
                 setTooltip(empty || value == null || value.isBlank() ? null : new Tooltip(value));
             }
@@ -634,6 +648,7 @@ public class ComparisonView implements BaseView {
     private HBox createToolbar() {
         HBox toolbar = new HBox(16);
         toolbar.setAlignment(Pos.CENTER_LEFT);
+        toolbar.getStyleClass().add("time-machine-page-header");
 
         VBox titleBox = new VBox(2);
         Label title = new Label("The Decision Time Machine");
@@ -650,14 +665,13 @@ public class ComparisonView implements BaseView {
     }
 
     private HBox createControlBar() {
-        HBox bar = new HBox(9);
-        bar.setAlignment(Pos.CENTER_LEFT);
-        bar.getStyleClass().add("time-machine-toolbar");
+        HBox bar = new HBox(14);
+        bar.setAlignment(Pos.BOTTOM_LEFT);
+        bar.getStyleClass().addAll("time-machine-toolbar", "time-machine-comparison-controls");
 
-        Label pLbl = new Label("Policy");
-        pLbl.getStyleClass().add("time-machine-control-label");
-
-        policyCombo.setPrefWidth(180);
+        policyCombo.setMinWidth(155);
+        policyCombo.setPrefWidth(220);
+        policyCombo.setMaxWidth(Double.MAX_VALUE);
         policyCombo.setCellFactory(lv -> new ListCell<>() {
             @Override
             protected void updateItem(Policy p, boolean empty) {
@@ -673,16 +687,16 @@ public class ComparisonView implements BaseView {
             }
         });
 
-        Label vaLbl = new Label("Baseline");
-        vaLbl.getStyleClass().add("time-machine-control-label");
-
-        versionACombo.setPrefWidth(120);
+        versionACombo.setMinWidth(112);
+        versionACombo.setPrefWidth(135);
+        versionACombo.setMaxWidth(Double.MAX_VALUE);
         setupVersionCellFactory(versionACombo);
 
         // Swap Button
         Button swapBtn = new Button();
         swapBtn.setGraphic(Icons.create(Icons.SWAP, 0.75, "#89b4fa"));
-        swapBtn.getStyleClass().add("btn-icon");
+        swapBtn.getStyleClass().addAll("btn-icon", "btn-secondary", "time-machine-swap-button");
+        swapBtn.setAccessibleText("Swap baseline and target versions");
         Tooltip swapTooltip = new Tooltip("Swap Baseline & Target Versions");
         Theme.apply(swapTooltip);
         swapBtn.setTooltip(swapTooltip);
@@ -693,19 +707,29 @@ public class ComparisonView implements BaseView {
             runComparisonAsync();
         });
 
-        Label vbLbl = new Label("Target");
-        vbLbl.getStyleClass().add("time-machine-control-label");
-
-        versionBCombo.setPrefWidth(120);
+        versionBCombo.setMinWidth(112);
+        versionBCombo.setPrefWidth(135);
+        versionBCombo.setMaxWidth(Double.MAX_VALUE);
         setupVersionCellFactory(versionBCombo);
 
-        Button compareBtn = new Button("Compare decisions");
+        Button compareBtn = new Button("Compare Decisions");
         compareBtn.getStyleClass().add("btn-primary");
         compareBtn.setGraphic(Icons.create(Icons.COMPARISON, 0.7, "#11111b"));
+        compareBtn.setMinWidth(165);
         compareBtn.setOnAction(e -> runComparisonAsync());
-        bar.getChildren().addAll(pLbl, policyCombo, vaLbl, versionACombo, swapBtn,
-                vbLbl, versionBCombo, compareBtn);
+        VBox policyField = controlField("POLICY", policyCombo);
+        HBox.setHgrow(policyField, Priority.ALWAYS);
+        VBox baselineField = controlField("BASELINE VERSION", versionACombo);
+        VBox targetField = controlField("TARGET VERSION", versionBCombo);
+        bar.getChildren().addAll(policyField, baselineField, swapBtn, targetField, compareBtn);
         return bar;
+    }
+
+    private VBox controlField(String labelText, Node control) {
+        VBox field = new VBox(6);
+        field.getStyleClass().add("time-machine-control-field");
+        field.getChildren().addAll(fieldLabel(labelText), control);
+        return field;
     }
 
     private void setupVersionCellFactory(ComboBox<PolicyVersion> combo) {
@@ -726,9 +750,9 @@ public class ComparisonView implements BaseView {
     }
 
     private HBox createSummaryCards() {
-        HBox row = new HBox(0);
-        row.setAlignment(Pos.CENTER_LEFT);
-        row.getStyleClass().add("time-machine-summary");
+        HBox row = new HBox(12);
+        row.setAlignment(Pos.CENTER);
+        row.getStyleClass().add("time-machine-summary-row");
         row.getChildren().addAll(
                 createSummaryMetric("DECISIONS CHANGED", changedCountLabel, "time-machine-summary-blue"),
                 createSummaryMetric("LOST ELIGIBILITY", lostCountLabel, "time-machine-summary-red"),
@@ -736,22 +760,24 @@ public class ComparisonView implements BaseView {
         return row;
     }
 
-    private HBox createSummaryMetric(String title, Label countLabel, String valueStyleClass) {
-        VBox text = new VBox(3);
-        text.getStyleClass().add("time-machine-summary-item");
+    private VBox createSummaryMetric(String title, Label countLabel, String valueStyleClass) {
+        VBox metric = new VBox(8);
+        metric.getStyleClass().add("time-machine-summary-card");
         Label titleLbl = new Label(title);
-        titleLbl.getStyleClass().add("caption-label");
+        titleLbl.getStyleClass().add("time-machine-summary-label");
         countLabel.getStyleClass().addAll("time-machine-summary-value", valueStyleClass);
-        text.getChildren().addAll(titleLbl, countLabel);
-        HBox.setHgrow(text, Priority.ALWAYS);
-        return new HBox(text);
+        metric.getChildren().addAll(titleLbl, countLabel);
+        HBox.setHgrow(metric, Priority.ALWAYS);
+        metric.setMaxWidth(Double.MAX_VALUE);
+        return metric;
     }
 
     private VBox createTableCard() {
         VBox card = new VBox(12);
         card.getStyleClass().add("card");
 
-        diffTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
+        diffTable.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
+        diffTable.setMinHeight(260);
         diffTable.setPlaceholder(new EmptyState(
                 Icons.COMPARISON,
                 "No Version Comparison Executed",
@@ -765,6 +791,8 @@ public class ComparisonView implements BaseView {
             @Override
             protected void updateItem(ApplicantDiff item, boolean empty) {
                 super.updateItem(item, empty);
+                setMinHeight(58);
+                setPrefHeight(-1);
                 getStyleClass().removeAll("row-changed-lost", "row-changed-gained");
                 if (!empty && item != null && item.hasDecisionChanged()) {
                     if (item.isV1Decision() && !item.isV2Decision()) {
@@ -792,15 +820,19 @@ public class ComparisonView implements BaseView {
                     VBox textBlock = new VBox(2);
                     Label nameLbl = new Label(diff.getApplicantName());
                     nameLbl.getStyleClass().add("time-machine-applicant-name");
+                    nameLbl.setWrapText(true);
                     Label idLbl = new Label("ID: " + diff.getApplicantId());
                     idLbl.getStyleClass().add("time-machine-applicant-id");
                     textBlock.getChildren().addAll(nameLbl, idLbl);
+                    HBox.setHgrow(textBlock, Priority.ALWAYS);
+                    textBlock.setMaxWidth(Double.MAX_VALUE);
                     box.getChildren().addAll(avatar, textBlock);
                     setGraphic(box);
                 }
             }
         });
-        candCol.setPrefWidth(220);
+        candCol.setMinWidth(195);
+        candCol.setPrefWidth(215);
 
         // Column 2: Transition Badges (v1 -> v2)
         TableColumn<ApplicantDiff, ApplicantDiff> shiftCol = new TableColumn<>("DECISION TRANSITION");
@@ -815,16 +847,19 @@ public class ComparisonView implements BaseView {
                     HBox box = new HBox(8);
                     box.setAlignment(Pos.CENTER_LEFT);
 
-                    StatusBadge v1Badge = diff.isV1Decision() ? StatusBadge.pass("vA: PASS") : StatusBadge.fail("vA: FAIL");
+                    StatusBadge v1Badge = diff.isV1Decision()
+                            ? StatusBadge.pass("BASELINE: PASS") : StatusBadge.fail("BASELINE: FAIL");
                     FontIcon arrow = Icons.create(Icons.ARROW_RIGHT, 0.6, "#9aa0c3");
-                    StatusBadge v2Badge = diff.isV2Decision() ? StatusBadge.pass("vB: PASS") : StatusBadge.fail("vB: FAIL");
+                    StatusBadge v2Badge = diff.isV2Decision()
+                            ? StatusBadge.pass("TARGET: PASS") : StatusBadge.fail("TARGET: FAIL");
 
                     box.getChildren().addAll(v1Badge, arrow, v2Badge);
                     setGraphic(box);
                 }
             }
         });
-        shiftCol.setPrefWidth(240);
+        shiftCol.setMinWidth(260);
+        shiftCol.setPrefWidth(280);
 
         // Column 3: Transition State Badge
         TableColumn<ApplicantDiff, String> stateCol = new TableColumn<>("CHANGE IMPACT");
@@ -848,7 +883,8 @@ public class ComparisonView implements BaseView {
                 }
             }
         });
-        stateCol.setPrefWidth(180);
+        stateCol.setMinWidth(185);
+        stateCol.setPrefWidth(200);
 
         // Column 4: Differentiating Reason
         TableColumn<ApplicantDiff, ApplicantDiff> reasonCol = new TableColumn<>("ROOT CAUSE DIFFERENTIATING FACTOR");
@@ -860,24 +896,30 @@ public class ComparisonView implements BaseView {
                 if (empty || diff == null) {
                     setText(null);
                     setGraphic(null);
+                    setTooltip(null);
+                    getStyleClass().remove("time-machine-state-text");
                 } else {
+                    setGraphic(null);
+                    setWrapText(true);
+                    setAlignment(Pos.CENTER_LEFT);
                     if (!diff.hasDecisionChanged()) {
-                        Label noneLbl = new Label("Consistent across criteria");
-                        noneLbl.getStyleClass().add("time-machine-state-text");
-                        setGraphic(noneLbl);
-                    } else {
-                        VBox reasonsBox = new VBox(3);
-                        for (String r : diff.getDifferentiatingReasons()) {
-                            Label rLbl = new Label("• " + r);
-                            rLbl.getStyleClass().add("time-machine-detail-value");
-                            reasonsBox.getChildren().add(rLbl);
+                        setText("Consistent across criteria");
+                        if (!getStyleClass().contains("time-machine-state-text")) {
+                            getStyleClass().add("time-machine-state-text");
                         }
-                        setGraphic(reasonsBox);
+                        setTooltip(null);
+                    } else {
+                        getStyleClass().remove("time-machine-state-text");
+                        setText(diff.getDifferentiatingReasons().stream()
+                                .map(reason -> "• " + reason)
+                                .collect(java.util.stream.Collectors.joining("\n")));
+                        setTooltip(new Tooltip(getText()));
                     }
                 }
             }
         });
-        reasonCol.setPrefWidth(320);
+        reasonCol.setMinWidth(360);
+        reasonCol.setPrefWidth(400);
 
         diffTable.getColumns().addAll(List.of(candCol, shiftCol, stateCol, reasonCol));
         diffTable.setItems(diffList);

@@ -2189,3 +2189,161 @@
     -fx-background-color: -color-border-subtle;
     -fx-padding: 0 1px;
 }
+
+/* Comparison workspace: responsive controls, readable tables and distinct metrics. */
+.time-machine-page-header {
+    -fx-padding: 0 0 4px 0;
+}
+
+.time-machine-comparison-content {
+    -fx-padding: 16px 2px 6px 2px;
+}
+
+.time-machine-content-scroll,
+.time-machine-content-scroll > .viewport {
+    -fx-background-color: transparent;
+}
+
+.time-machine-content-scroll {
+    -fx-padding: 0;
+}
+
+.time-machine-comparison-controls {
+    -fx-alignment: BOTTOM_LEFT;
+    -fx-spacing: 14px;
+    -fx-padding: 16px;
+}
+
+.time-machine-comparison-controls .combo-box {
+    -fx-pref-height: 38px;
+    -fx-background-radius: 9px;
+}
+
+.time-machine-control-field {
+    -fx-min-width: 112px;
+}
+
+.time-machine-control-field .time-machine-filter-label {
+    -fx-font-size: 10px;
+    -fx-letter-spacing: 0.6px;
+}
+
+.time-machine-swap-button {
+    -fx-min-width: 38px;
+    -fx-min-height: 38px;
+    -fx-padding: 8px;
+    -fx-background-radius: 9px;
+}
+
+.time-machine-comparison-controls .btn-primary {
+    -fx-min-height: 38px;
+    -fx-background-radius: 9px;
+    -fx-padding: 0 15px;
+}
+
+.time-machine-config-diff {
+    -fx-min-height: 220px;
+    -fx-padding: 16px;
+}
+
+.time-machine-config-diff .table-row-cell,
+.time-machine-tabs .time-machine-comparison-content .table-row-cell {
+    -fx-cell-size: -1;
+    -fx-min-height: 44px;
+}
+
+.time-machine-config-diff .table-cell,
+.time-machine-comparison-content .table-cell {
+    -fx-padding: 9px 12px;
+    -fx-alignment: CENTER_LEFT;
+}
+
+.time-machine-config-diff .column-header .label,
+.time-machine-comparison-content .column-header .label {
+    -fx-wrap-text: true;
+    -fx-alignment: CENTER_LEFT;
+    -fx-text-alignment: LEFT;
+}
+
+.time-machine-config-diff .table-cell {
+    -fx-wrap-text: true;
+}
+
+.time-machine-summary-row {
+    -fx-spacing: 12px;
+}
+
+.time-machine-summary-card {
+    -fx-min-width: 140px;
+    -fx-spacing: 8px;
+    -fx-padding: 14px 16px;
+    -fx-background-color: -color-card;
+    -fx-background-radius: 12px;
+    -fx-border-color: -color-card-border;
+    -fx-border-radius: 12px;
+    -fx-border-width: 1px;
+}
+
+.time-machine-summary-label {
+    -fx-font-size: 10px;
+    -fx-font-weight: 700;
+    -fx-text-fill: -color-text-secondary;
+}
+
+.time-machine-summary-value {
+    -fx-font-size: 26px;
+    -fx-font-weight: 700;
+}
+
+.time-machine-recorded-comparison {
+    -fx-spacing: 12px;
+}
+
+.time-machine-recorded-comparison > .card {
+    -fx-padding: 10px 14px 14px 14px;
+}
+
+.time-machine-comparison-content .table-row-cell {
+    -fx-min-height: 62px;
+}
+
+.time-machine-comparison-content .table-cell {
+    -fx-font-size: 12px;
+    -fx-text-fill: -color-text-primary;
+}
+
+.time-machine-comparison-content .time-machine-applicant-name {
+    -fx-wrap-text: true;
+}
+
+.time-machine-tabs .tab-header-area {
+    -fx-padding: 0 0 10px 0;
+}
+
+.time-machine-tabs .tab {
+    -fx-background-radius: 9px;
+    -fx-padding: 9px 16px;
+}
+
+.time-machine-tabs .tab:selected {
+    -fx-background-color: -color-accent-tint;
+    -fx-border-color: transparent transparent -color-accent transparent;
+    -fx-border-radius: 9px;
+    -fx-border-width: 0 0 2px 0;
+}
+
+.time-machine-tabs .tab:selected .tab-label {
+    -fx-text-fill: -color-accent;
+}
+
+.time-machine-summary-blue {
+    -fx-text-fill: -color-accent;
+}
+
+.time-machine-summary-red {
+    -fx-text-fill: -color-danger;
+}
+
+.time-machine-summary-teal {
+    -fx-text-fill: -color-success;
+}
